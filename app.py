@@ -28,9 +28,9 @@ def main(ck, cs, at, ats):
         l = db.find_last_object()
         last_id = l['latest_dm_id']
 
-        list_dm, latest_id = bot.get_dms(last_id)
-        
-        bot.process_dm(list_dm)
+        list_dm = bot.get_dms(str(last_id))
+
+        latest_id = bot.process_dm(list_dm)
 
         if (last_id != latest_id):
             db.insert_object({'latest_dm_id': latest_id})

@@ -35,15 +35,16 @@ class Twitter:
         list_dm = []
 
         for dm in tweepy.Cursor(self.api.list_direct_messages).items():
-            dm_text = dm.message_create['message_data']['text']
-            print(dm.id, dm_text)
-            list_dm.append(dm_text)
-            if dm.id == latest_id:
-                latest_id = int(dm.id)
-                return list_dm, latest_id
+            text = dm.message_create['message_data']['text']
+            sender = dm.message_create['sender_id']
+            id = dm.id
+            if (self.triggering_words in text) or (self.triggering_words.capitalize() in text):
+                print(dm.id, text)
+                list_dm.append({'text': text, 'id': id, 'sender': sender})
+            if id == latest_id:
+                return list_dm
 
-        latest_id = int(dm.id)
-        return list_dm, latest_id
+        return list_dm
 
     def process_dm(self, list_dm):
         db = Database()
@@ -51,7 +52,14 @@ class Twitter:
         db.select_col('dm')
 
         for dm in reversed(list_dm):
-            if self.triggering_words in dm:
-                print("tweeted: ", dm)
-                self.api.update_status(status=dm)
-                time.sleep(self.time_interval)
+            try:
+                sender = self.api.get_user(id=dm['sender'])
+                status = dm['text']
+                self.api.update_status(status=status)
+                print("tweeted: ", status, "sender: ", sender.screen_name)
+            except tweepy.TweepError as e:
+                print(e.api_code, e.response)
+            db.insert_object({'latest_id': dm['id']})
+            time.sleep(self.time_interval)
+
+        return dm['id']
