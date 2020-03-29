@@ -4,6 +4,7 @@ import tweepy
 import os
 import time
 import yaml
+from progress.spinner import PixelSpinner
 from requests_oauthlib import OAuth1Session
 from db_mongo import Database
 from dict import error_code, trigger_words
@@ -37,13 +38,22 @@ class Twitter:
 
     def tweet_status(self, dm):
         status = dm['text']
-        # self.api.update_status(status=status)
-        print("tweeted: ", status)
+        self.api.update_status(status=status)
 
     def tweet_status_with_media(self, dm, filename):
         status = dm['text']
-        # self.api.update_with_media(filename=filename, status=status)
-        print("tweeted: ", status)
+
+        final_text = ''
+        words = [i for j in status.split() for i in (j, ' ')][:-1]
+        for word in words:
+            print('http' in word)
+            if 'http' in word:
+                word = word.replace(word, '')
+                final_text += word
+            else:
+                final_text += word
+
+        self.api.update_with_media(filename=filename, status=final_text)
 
     def get_dm_media(self, url):
         client = OAuth1Session(self.consumer_key,
@@ -60,12 +70,14 @@ class Twitter:
     def get_dms(self, latest_id):
         list_dm = []
         new_latest_id = latest_id
+
+        spinner = PixelSpinner('📥 Fetching DMs ')
         for dm in tweepy.Cursor(self.api.list_direct_messages).items():
             new_latest_id = max(dm.id, new_latest_id)
             text = dm.message_create['message_data']['text']
             sender = dm.message_create['sender_id']
             id = dm.id
-            time.sleep(1)
+            spinner.next()
 
             if id != latest_id:
                 if (self.triggering_words in text) or (self.triggering_words.capitalize() in text):
@@ -88,8 +100,12 @@ class Twitter:
         db.connect_db(self.db_name)
         db.select_col('dm')
 
+        print(f'Processing {len(list_dm)} DMs:')
         for index, dm in enumerate(reversed(list_dm)):
-            print(index + 1)
+            sender = self.api.get_user(id=dm['sender'])
+
+            print(
+                f"\n📨 | #️⃣ : {index+1} | 👥 : @{sender.screen_name} | 💬 : {dm['text']}")
             try:
                 if dm['media_url'] is not None:
                     file = self.get_dm_media(dm['media_url'])
@@ -99,5 +115,5 @@ class Twitter:
 
             except tweepy.TweepError as e:
                 print(e.api_code, e.response)
-            db.insert_object({'latest_dm_id': dm['id']})
+            db.insert_object({'latest_dm_id': dm['id'], 'sender': dm['id']})
             time.sleep(self.time_interval)

@@ -48,7 +48,6 @@ class Database:
             for i, t in enumerate(list_col):
                 if i == 0:
                     last = t
-                    print("🔥 {} selected".format(last))
                     return last
         else:
             print('!!! Please connect first !!!')
@@ -60,7 +59,7 @@ class Database:
         data.update({'_id': last_id})
 
         self.collection.insert_one(data)
-        print("💾 saved {}".format(data))
+        print(f"💾 DM ID: {data['latest_dm_id']} saved")
 
     def find_object(self, key):
         for a in self.collection.find({'key': key}):
