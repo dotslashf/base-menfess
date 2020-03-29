@@ -46,7 +46,6 @@ class Twitter:
         final_text = ''
         words = [i for j in status.split() for i in (j, ' ')][:-1]
         for word in words:
-            print('http' in word)
             if 'http' in word:
                 word = word.replace(word, '')
                 final_text += word
