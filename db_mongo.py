@@ -22,7 +22,7 @@ class Database:
         try:
             db_list = self.client.list_database_names()
             if database in db_list:
-                print('🗄️  connected to {} database'.format(database))
+                print('\n🗄️  connected to {} database'.format(database))
                 self.db = self.client[database]
             else:
                 print('no database such as {} found'.format(database))
@@ -35,7 +35,7 @@ class Database:
             col_list = self.db.list_collection_names()
             if collection in col_list:
                 self.collection = self.db[collection]
-                print("➡️  {} collection selected".format(collection))
+                print("➡️  {} collection selected\n".format(collection))
             else:
                 print('no collection such as {} found'.format(collection))
         except Exception as e:
