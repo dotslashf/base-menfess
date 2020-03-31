@@ -12,7 +12,7 @@ from PIL import Image
 
 
 class Twitter:
-    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret):
+    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, db_name):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token = access_token
@@ -24,7 +24,7 @@ class Twitter:
         self.error_code = self.load_dict(error_code)
         self.time_interval = 15
         self.path_media = "img/current_img.png"
-        self.db_name = os.environ.get("DB_NAME_DM_TEST")
+        self.db_name = db_name
 
     def authentication(self):
         self.auth = tweepy.OAuthHandler(
@@ -114,5 +114,5 @@ class Twitter:
 
             except tweepy.TweepError as e:
                 print(e.api_code, e.response)
-            db.insert_object({'latest_dm_id': dm['id'], 'sender': dm['id']})
+            db.insert_object({'latest_dm_id': dm['id'], 'sender': dm['id'], 'text': dm['text']})
             time.sleep(self.time_interval)
