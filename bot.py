@@ -22,7 +22,7 @@ class Twitter:
         self.me = self.api.me()
         self.triggering_words = trigger_words
         self.error_code = self.load_dict(error_code)
-        self.time_interval = 15
+        self.time_interval = 30
         self.path_media = "img/current_img.png"
         self.db_name = db_name
 

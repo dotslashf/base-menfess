@@ -10,4 +10,4 @@ error_code = {
     "suspended_account": [63, "Yang mau dimock dah disuspend, twitter, mampus."]
 }
 
-trigger_words = "mtt"
+trigger_words = "up"

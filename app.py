@@ -22,7 +22,7 @@ def main(ck, cs, at, ats, db_name):
     db.connect_db(db_name)
     db.select_col('dm')
 
-    minute_wait = 5
+    minute_wait = 10
 
     while True:
         l = db.find_last_object()
