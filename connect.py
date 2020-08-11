@@ -8,14 +8,16 @@ db = Database()
 db.connect_db('mockthistweet_test')
 db.select_col('environment')
 
-consumer_key = db.find_object('consumer_key')
-consumer_secret = db.find_object('consumer_secret')
+consumer_key = "EPG8PcFR8BlwN1cxaw5rDTojj"
+consumer_secret = "d0Nyqfu8xo7mAv7DANyG2WgX40nyO0JdXDkLLcz5rf4oi5ZbCV"
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 print('Please visit: ' + auth.get_authorization_url())
 
 oauth_token = auth.request_token['oauth_token']
 oauth_token_secret = auth.request_token['oauth_token_secret']
+
+print(oauth_token, oauth_token_secret)
 
 auth.request_token['oauth_token'] = oauth_token
 auth.request_token['oauth_token_secret'] = oauth_token_secret

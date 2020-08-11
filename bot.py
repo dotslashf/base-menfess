@@ -9,6 +9,7 @@ from requests_oauthlib import OAuth1Session
 from db_mongo import Database
 from dict import error_code, trigger_words
 from PIL import Image
+from splicer import Splicer
 
 
 class Twitter:
@@ -36,23 +37,71 @@ class Twitter:
         dict = yaml.load("{}".format(dict_name), Loader=yaml.BaseLoader)
         return dict
 
+    def check_mutual(self, sender):
+        source_id = self.me.id
+        fs = self.api.show_friendship(
+            source_id=source_id, target_id=int(sender))
+        return fs[0].followed_by and fs[1].followed_by
+
     def tweet_status(self, dm):
-        status = dm['text']
-        self.api.update_status(status=status)
+        if self.is_dm_longer(dm):
+            self.tweet_in_thread(dm, None)
+        else:
+            status = dm['text']
+            self.api.update_status(status=status)
 
     def tweet_status_with_media(self, dm, filename):
-        status = dm['text']
+        if self.is_dm_longer(dm):
+            self.tweet_in_thread(dm, filename)
+        else:
+            status = dm['text']
 
-        final_text = ''
-        words = [i for j in status.split() for i in (j, ' ')][:-1]
-        for word in words:
-            if 'http' in word:
-                word = word.replace(word, '')
-                final_text += word
-            else:
-                final_text += word
+            final_text = ''
+            words = [i for j in status.split() for i in (j, ' ')][:-1]
+            for word in words:
+                if 'http' in word:
+                    word = word.replace(word, '')
+                    final_text += word
+                else:
+                    final_text += word
 
-        self.api.update_with_media(filename=filename, status=final_text)
+            self.api.update_with_media(filename=filename, status=final_text)
+
+    def is_dm_longer(self, dm):
+        return len(dm['text']) > 280
+
+    def tweet_in_thread(self, dm, filename):
+        tweets = Splicer(dm['text'])
+        tweets = tweets.split_tweets()
+
+        if dm['media_url']:
+            for i in range(len(tweets)):
+                if i == 0:
+                    final_text = ''
+                    words = [i for j in tweets[i].split() for i in (j, ' ')][:-1]
+                    for word in words:
+                        if 'http' in word:
+                            word = word.replace(word, '')
+                            final_text += word
+                        else:
+                            final_text += word
+
+                    self.api.update_with_media(
+                        filename=filename, status=final_text)
+                else:
+                    home_tl = self.api.home_timeline(count=5)
+                    latest_tweet_id = home_tl[0].id
+                    self.api.update_status(
+                        status=tweets[i], in_reply_to_status_id=latest_tweet_id)
+        else:
+            for i in range(len(tweets)):
+                if i == 0:
+                    self.api.update_status(status=tweets[i])
+                else:
+                    home_tl = self.api.home_timeline(count=5)
+                    latest_tweet_id = home_tl[0].id
+                    self.api.update_status(
+                        status=tweets[i], in_reply_to_status_id=latest_tweet_id)
 
     def get_dm_media(self, url):
         client = OAuth1Session(self.consumer_key,
@@ -80,14 +129,17 @@ class Twitter:
 
             if id != latest_id:
                 if (self.triggering_words in text) or (self.triggering_words.capitalize() in text):
-                    if "attachment" in dm.message_create['message_data']:
-                        dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
-                        list_dm.append(
-                            {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
+                    if self.check_mutual(sender):
+                        if "attachment" in dm.message_create['message_data']:
+                            dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
+                            list_dm.append(
+                                {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
+                        else:
+                            dm_media_url = None
+                            list_dm.append(
+                                {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
                     else:
-                        dm_media_url = None
-                        list_dm.append(
-                            {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
+                        print('Skipped sender is not mutual')
             elif id == latest_id:
                 break
 
@@ -106,13 +158,17 @@ class Twitter:
             print(
                 f"\n📨 | #️⃣ : {index+1} | 👥 : @{sender.screen_name} | 💬 : {dm['text']}")
             try:
-                if dm['media_url'] is not None:
+                if dm['media_url']:
                     file = self.get_dm_media(dm['media_url'])
                     self.tweet_status_with_media(dm, file)
                 else:
                     self.tweet_status(dm)
+            except tweepy.TweepError as error:
+                print(error.api_code, error.response)
+                if error.api_code == 50:
+                    print(f'Sender user id not found, skip')
+                    continue
 
-            except tweepy.TweepError as e:
-                print(e.api_code, e.response)
-            db.insert_object({'latest_dm_id': dm['id'], 'sender': dm['id'], 'text': dm['text']})
+            db.insert_object(
+                {'latest_dm_id': dm['id'], 'sender': sender.id_str, 'text': dm['text']})
             time.sleep(self.time_interval)
