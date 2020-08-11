@@ -4,7 +4,6 @@ import tweepy
 import os
 import time
 import yaml
-from progress.spinner import PixelSpinner
 from requests_oauthlib import OAuth1Session
 from db_mongo import Database
 from dict import error_code, trigger_words
@@ -37,7 +36,7 @@ class Twitter:
         dict = yaml.load("{}".format(dict_name), Loader=yaml.BaseLoader)
         return dict
 
-    def check_mutual(self, sender):
+    def is_mutual(self, sender):
         source_id = self.me.id
         fs = self.api.show_friendship(
             source_id=source_id, target_id=int(sender))
@@ -93,6 +92,7 @@ class Twitter:
                     latest_tweet_id = home_tl[0].id
                     self.api.update_status(
                         status=tweets[i], in_reply_to_status_id=latest_tweet_id)
+                time.sleep(5)
         else:
             for i in range(len(tweets)):
                 if i == 0:
@@ -119,17 +119,16 @@ class Twitter:
         list_dm = []
         new_latest_id = latest_id
 
-        spinner = PixelSpinner('📥 Fetching DMs ')
+        print('📥 Fetching DMs ')
         for dm in tweepy.Cursor(self.api.list_direct_messages).items():
             new_latest_id = max(dm.id, new_latest_id)
             text = dm.message_create['message_data']['text']
             sender = dm.message_create['sender_id']
             id = dm.id
-            spinner.next()
 
             if id != latest_id:
                 if (self.triggering_words in text) or (self.triggering_words.capitalize() in text):
-                    if self.check_mutual(sender):
+                    if self.is_mutual(sender):
                         if "attachment" in dm.message_create['message_data']:
                             dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
                             list_dm.append(
