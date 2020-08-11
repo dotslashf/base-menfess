@@ -36,6 +36,12 @@ class Twitter:
         dict = yaml.load("{}".format(dict_name), Loader=yaml.BaseLoader)
         return dict
 
+    def check_mutual(self, sender):
+        source_id = self.me.id
+        fs = self.api.show_friendship(
+            source_id=source_id, target_id=int(sender))
+        return fs[0].followed_by and fs[1].followed_by
+
     def tweet_status(self, dm):
         status = dm['text']
         self.api.update_status(status=status)
@@ -80,14 +86,17 @@ class Twitter:
 
             if id != latest_id:
                 if (self.triggering_words in text) or (self.triggering_words.capitalize() in text):
-                    if "attachment" in dm.message_create['message_data']:
-                        dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
-                        list_dm.append(
-                            {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
+                    if self.check_mutual(sender):
+                        if "attachment" in dm.message_create['message_data']:
+                            dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
+                            list_dm.append(
+                                {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
+                        else:
+                            dm_media_url = None
+                            list_dm.append(
+                                {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
                     else:
-                        dm_media_url = None
-                        list_dm.append(
-                            {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
+                        print('Skipped sender is not mutual')
             elif id == latest_id:
                 break
 
@@ -111,8 +120,12 @@ class Twitter:
                     self.tweet_status_with_media(dm, file)
                 else:
                     self.tweet_status(dm)
+            except tweepy.TweepError as error:
+                print(error.api_code, error.response)
+                if error.api_code == 50:
+                    print(f'Sender user id not found, skip')
+                    continue
 
-            except tweepy.TweepError as e:
-                print(e.api_code, e.response)
-            db.insert_object({'latest_dm_id': dm['id'], 'sender': dm['id'], 'text': dm['text']})
+            db.insert_object(
+                {'latest_dm_id': dm['id'], 'sender': sender.id_str, 'text': dm['text']})
             time.sleep(self.time_interval)
