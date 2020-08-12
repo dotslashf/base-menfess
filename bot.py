@@ -6,7 +6,6 @@ import time
 import yaml
 from requests_oauthlib import OAuth1Session
 from db_mongo import Database
-from dict import error_code, trigger_words
 from PIL import Image
 from splicer import Splicer
 
@@ -20,8 +19,7 @@ class Twitter:
         self.auth = self.authentication()
         self.api = tweepy.API(self.auth)
         self.me = self.api.me()
-        self.triggering_words = trigger_words
-        self.error_code = self.load_dict(error_code)
+        self.trigger_word = args.trigger
         self.time_interval = 30
         self.path_media = "img/current_img.png"
         self.args = args
@@ -132,7 +130,7 @@ class Twitter:
             id = dm.id
 
             if id != latest_id:
-                if (self.triggering_words in text):
+                if (self.trigger_word in text):
                     if self.is_mutual(sender):
                         if "attachment" in dm.message_create['message_data']:
                             dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]

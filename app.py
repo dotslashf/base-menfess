@@ -22,6 +22,8 @@ parser.add_argument("-m", "--mutual", type=str2bool, nargs='?',
                     help="Check mutual or not")
 parser.add_argument("-db", "--database", type=str,
                     help="Connect to preferred db")
+parser.add_argument("-tr", "--trigger", type=str,
+                    help="Trigger word for menfess")
 args = parser.parse_args()
 
 db_name = args.database
