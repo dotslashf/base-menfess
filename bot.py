@@ -12,7 +12,7 @@ from splicer import Splicer
 
 
 class Twitter:
-    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, db_name):
+    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, db_name, args):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token = access_token
@@ -25,6 +25,7 @@ class Twitter:
         self.time_interval = 30
         self.path_media = "img/current_img.png"
         self.db_name = db_name
+        self.args = args
 
     def authentication(self):
         self.auth = tweepy.OAuthHandler(
@@ -38,9 +39,12 @@ class Twitter:
 
     def is_mutual(self, sender):
         source_id = self.me.id
-        fs = self.api.show_friendship(
-            source_id=source_id, target_id=int(sender))
-        return fs[0].followed_by and fs[1].followed_by
+        if self.args.mutual:
+            fs = self.api.show_friendship(
+                source_id=source_id, target_id=int(sender))
+            return fs[0].followed_by and fs[1].followed_by
+        else:
+            return True
 
     def tweet_status(self, dm):
         if self.is_dm_longer(dm):

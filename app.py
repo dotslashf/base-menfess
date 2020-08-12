@@ -1,6 +1,7 @@
 import sys
 import time
 import os
+import argparse
 from bot import Twitter
 from db_mongo import Database
 
@@ -16,10 +17,27 @@ access_token = db.find_object('access_token')
 access_token_secret = db.find_object('access_token_secret')
 
 
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-m", "--mutual", type=str2bool, nargs='?',
+                    const=True, default=False,
+                    help="Check mutual or not")
+args = parser.parse_args()
+
 def main(ck, cs, at, ats, db_name):
-    bot = Twitter(ck, cs, at, ats, db_name)
+    bot = Twitter(ck, cs, at, ats, db_name, args)
     db = Database()
-    db.connect_db(db_name)
+    db.connect_db(db_name) 
     db.select_col('dm')
 
     minute_wait = 5
