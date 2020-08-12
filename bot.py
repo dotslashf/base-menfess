@@ -129,6 +129,9 @@ class Twitter:
             sender = dm.message_create['sender_id']
             id = dm.id
 
+            if self.trigger_word[0] == "\\":
+                self.trigger_word = self.trigger_word.replace("\\", "")
+
             if id != latest_id:
                 if (self.trigger_word in text):
                     if self.is_mutual(sender):
