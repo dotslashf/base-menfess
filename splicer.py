@@ -1,3 +1,6 @@
+import math
+
+
 class Splicer(object):
     def __init__(self, tweet):
         self.tweet = tweet
@@ -7,8 +10,9 @@ class Splicer(object):
     def split_tweets(self):
         n_tweet = 1
         if len(self.tweet) > self.max_tweet_char:
-            n_tweet = int(round((len(self.tweet) / self.max_tweet_char)+1))
-        print(f'number of tweets {n_tweet}')
+            n_tweet = int(
+                round((math.floor(len(self.tweet) / self.max_tweet_char)) + 1))
+        print(f'number of tweets {n_tweet}, tweets length {len(self.tweet)}')
 
         tweets = []
         if n_tweet > 1:
@@ -21,27 +25,26 @@ class Splicer(object):
                     cut = last_cut
 
                 if i < n_tweet - 1:
-                    next_cut = (len(self.tweet) / n_tweet) * (i + 1)
-                    while next_cut < self.max_safe_char * (i + 1):
-                        next_cut += 1
+                    # next_cut = (len(self.tweet) / n_tweet) * (i + 1)
+                    next_cut = self.max_safe_char * (i + 1)
+                    while next_cut > self.max_safe_char * (i + 1):
+                        next_cut -= 1
                 else:
+                    print('last cut')
                     next_cut = len(self.tweet)
-                    while next_cut < len(self.tweet):
-                        next_cut += 1
                     is_last = True
 
                 next_cut = round(next_cut)
                 cut = round(cut)
 
-                if next_cut == len(self.tweet) or self.tweet[next_cut] == ' ':
-                    print('last cut')
-                else:
-                    print('cut')
-                    try:
-                        while self.tweet[next_cut] != ' ':
-                            next_cut -= 1
-                    except:
-                        next_cut = round(len(self.tweet) / 2)
+                # if next_cut > len(self.tweet) or self.tweet[next_cut-1] == ' ':
+                #     is_last = True
+                # else:
+                try:
+                    while self.tweet[next_cut] != ' ':
+                        next_cut -= 1
+                except:
+                    next_cut = round(len(self.tweet) / 2)
 
                 if not is_last:
                     next_cut -= 1
@@ -49,7 +52,9 @@ class Splicer(object):
                         while self.tweet[next_cut] != ' ':
                             next_cut += 1
                     except:
-                        next_cut = round(len(self.tweet)/2)
+                        next_cut = round(len(self.tweet) / 2)
+                else:
+                    next_cut = len(self.tweet)
 
                 # tweet awal
                 if i == 0:
@@ -64,7 +69,7 @@ class Splicer(object):
                     tweets.append('⬆️ ' + self.tweet[cut:next_cut].strip())
 
                 print(
-                    f'tweet ke: {i+1}\n------------\n{tweets[i]}')
+                    f'----------------------\ntweet ke: {i+1}:{len(self.tweet[cut:next_cut])}\n{tweets[i]}')
 
                 last_cut = next_cut
         else:
