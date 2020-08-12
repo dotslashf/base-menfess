@@ -24,7 +24,7 @@ parser.add_argument("-db", "--database", type=str,
                     help="Connect to preferred db")
 args = parser.parse_args()
 
-db_name = os.environ.get(args.database)
+db_name = args.database
 
 db = Database()
 db.connect_db(db_name)
