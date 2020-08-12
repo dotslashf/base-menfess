@@ -77,7 +77,8 @@ class Twitter:
             for i in range(len(tweets)):
                 if i == 0:
                     final_text = ''
-                    words = [i for j in tweets[i].split() for i in (j, ' ')][:-1]
+                    words = [i for j in tweets[i].split()
+                             for i in (j, ' ')][:-1]
                     for word in words:
                         if 'http' in word:
                             word = word.replace(word, '')
@@ -127,16 +128,18 @@ class Twitter:
             id = dm.id
 
             if id != latest_id:
-                if (self.triggering_words in text) or (self.triggering_words.capitalize() in text):
+                if (self.triggering_words in text):
                     if self.is_mutual(sender):
                         if "attachment" in dm.message_create['message_data']:
                             dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
                             list_dm.append(
                                 {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
+                            print('Added 1 DM')
                         else:
                             dm_media_url = None
                             list_dm.append(
                                 {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
+                            print('Added 1 DM')
                     else:
                         print('Skipped sender is not mutual')
             elif id == latest_id:
