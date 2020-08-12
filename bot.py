@@ -12,7 +12,7 @@ from splicer import Splicer
 
 
 class Twitter:
-    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, db_name, args):
+    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, args):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token = access_token
@@ -24,8 +24,8 @@ class Twitter:
         self.error_code = self.load_dict(error_code)
         self.time_interval = 30
         self.path_media = "img/current_img.png"
-        self.db_name = db_name
         self.args = args
+        self.db_name = args.database
 
     def authentication(self):
         self.auth = tweepy.OAuthHandler(
