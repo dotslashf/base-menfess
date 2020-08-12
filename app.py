@@ -25,8 +25,16 @@ parser.add_argument("-db", "--database", type=str,
                     help="Connect to preferred db")
 parser.add_argument("-tr", "--trigger", type=str,
                     help="Trigger word for menfess")
+parser.add_argument("-f", "--filter", help="Add file for filtered words")
+
 args = parser.parse_args()
 print(args)
+
+with open(args.filter) as f:
+    filters = f.read().split(', ')
+
+args.filter = filters
+
 db_name = args.database
 
 db = Database()

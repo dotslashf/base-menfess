@@ -24,6 +24,7 @@ class Twitter:
         self.path_media = "img/current_img.png"
         self.args = args
         self.db_name = args.database
+        self.filters = args.filter
 
     def authentication(self):
         self.auth = tweepy.OAuthHandler(
@@ -118,6 +119,15 @@ class Twitter:
         media = Image.open(self.path_media)
         return media.filename
 
+    def is_contained_filtered_words(self, text):
+        for fil in self.filters:
+            if fil not in text:
+                continue
+            else:
+                print("Contained filtered words, skipped")
+                return False
+        return True
+
     def get_dms(self, latest_id):
         list_dm = []
         new_latest_id = latest_id
@@ -133,7 +143,7 @@ class Twitter:
                 self.trigger_word = self.trigger_word.replace("\\", "")
 
             if id != latest_id:
-                if (self.trigger_word in text):
+                if self.trigger_word in text and self.is_contained_filtered_words(text):
                     if self.is_mutual(sender):
                         if "attachment" in dm.message_create['message_data']:
                             dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
