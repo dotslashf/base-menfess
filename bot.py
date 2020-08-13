@@ -5,7 +5,7 @@ import os
 import time
 import yaml
 from requests_oauthlib import OAuth1Session
-from db_mongo import Database
+from db import Database
 from PIL import Image
 from splicer import Splicer
 
@@ -133,7 +133,7 @@ class Twitter:
         new_latest_id = latest_id
 
         print('📥 Fetching DMs ')
-        for dm in tweepy.Cursor(self.api.list_direct_messages).items():
+        for dm in tweepy.Cursor(self.api.list_direct_messages).items(limit=50):
             new_latest_id = max(dm.id, new_latest_id)
             text = dm.message_create['message_data']['text']
             sender = dm.message_create['sender_id']
