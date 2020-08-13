@@ -1,9 +1,10 @@
 import pymongo
 import os
+import datetime
 
 
 class Database:
-    def __init__(self):
+    def __init__(self, menfess):
 
         if os.environ.get("APP_ENV") == 'LOCAL':
             self.client = pymongo.MongoClient(
@@ -13,10 +14,11 @@ class Database:
             db_password = os.environ.get("DB_PASS")
             db_cluster = os.environ.get("DB_CLUSTER")
             self.client = pymongo.MongoClient(
-                "mongodb+srv://{}:{}@{}-kdbqm.mongodb.net/test?retryWrites=true&w=majority".format(db_user, db_password, db_cluster))
+                f"mongodb+srv://{db_user}:{db_password}@{db_cluster}-kdbqm.mongodb.net/test?retryWrites=true&w=majority")
 
         self.db = None
         self.collection = None
+        self.menfess = menfess
 
     def connect_db(self, database):
         try:
@@ -30,42 +32,45 @@ class Database:
         except Exception as e:
             print(e)
 
-    def select_col(self, collection):
+    def select_collection(self, collection):
         try:
             col_list = self.db.list_collection_names()
             if collection in col_list:
                 self.collection = self.db[collection]
                 print("➡️  {} collection selected\n".format(collection))
             else:
-                print('no collection such as {} found'.format(collection))
+                print('no collection {} found'.format(collection))
+                print("creating collection")
+                self.create_collection_first_time()
         except Exception as e:
             print(e)
 
     def find_last_object(self):
         if self.collection:
-            list_col = self.collection.find().sort('_id', -1)
-
-            for i, t in enumerate(list_col):
-                if i == 0:
-                    last = t
-                    return last
-        else:
-            print('!!! Please connect first !!!')
+            list_data = self.collection.find().sort('_id', -1)
+            return list_data[0]
 
     def insert_object(self, data):
         last = self.find_last_object()
         last_id = last['_id'] + 1
 
-        data.update({'_id': last_id})
+        data.update({'_id': last_id, 'date': datetime.datetime.now()})
 
         self.collection.insert_one(data)
         print(f"💾 DM ID: {data['latest_dm_id']} saved")
 
-    def find_object(self, key):
-        for a in self.collection.find({'key': key}):
-            return a['value']
+    def get_credentials(self):
+        data = self.collection.find_one({'menfess_name': self.menfess})
+        return data
 
     def find_and_modify(self, key, value):
         self.collection.find_one_and_update(
             {'key': key}, {'$set': {'value': value}})
         print("Value of {0} changed to {1}".format(key, value))
+
+    def create_collection_first_time(self):
+        self.collection = self.db[f"{self.menfess}"]
+        data = {'_id': 1, 'latest_dm_id': '', 'sender_id': '',
+                'text': '', 'date': datetime.datetime.now(), 'is_active': True}
+        self.collection.insert_one(data)
+        print(f"created {self.menfess} dm list")
