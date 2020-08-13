@@ -1,6 +1,6 @@
 import tweepy
 import os
-from db_mongo import Database
+from db import Database
 
 db_name = os.environ.get("DB_NAME")
 

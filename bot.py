@@ -20,11 +20,12 @@ class Twitter:
         self.api = tweepy.API(self.auth)
         self.me = self.api.me()
         self.trigger_word = args.trigger
-        self.time_interval = 30
+        self.tweet_interval = 30
         self.path_media = "img/current_img.png"
         self.args = args
         self.db_name = args.database
         self.filters = args.filter
+        self.menfess = args.menfess
 
     def authentication(self):
         self.auth = tweepy.OAuthHandler(
@@ -164,11 +165,13 @@ class Twitter:
         return new_latest_id
 
     def process_dm(self, list_dm):
-        db = Database()
+        db = Database(self.menfess)
         db.connect_db(self.db_name)
-        db.select_col('dm')
+        db.select_collection(self.menfess)
 
-        print(f'Processing {len(list_dm)} DMs:')
+        if len(list_dm) != 0:
+            print(f'Processing {len(list_dm)} DMs:')
+
         for index, dm in enumerate(reversed(list_dm)):
             sender = self.api.get_user(id=dm['sender'])
 
@@ -180,12 +183,12 @@ class Twitter:
                     self.tweet_status_with_media(dm, file)
                 else:
                     self.tweet_status(dm)
-            except tweepy.TweepError as error:
-                print(error.api_code, error.response)
-                if error.api_code == 50:
-                    print(f'Sender user id not found, skip')
-                    continue
 
-            db.insert_object(
-                {'latest_dm_id': dm['id'], 'sender': sender.id_str, 'text': dm['text']})
-            time.sleep(self.time_interval)
+                db.insert_object(
+                    {'latest_dm_id': dm['id'], 'sender': sender.id_str, 'text': dm['text']})
+                    
+            except tweepy.TweepError as error:
+                print(f"{error.api_code}, {error.response}, {error.reason}")
+                continue
+
+            time.sleep(self.tweet_interval)

@@ -3,55 +3,36 @@ import time
 import os
 import argparse
 from bot import Twitter
-from db_mongo import Database
+from db import Database
+from args import create_parser
 
 
-def str2bool(v):
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+args = create_parser()
 
+if args.filter:
+    with open(args.filter) as f:
+        filters = f.read().split(', ')
+    args.filter = filters
+else:
+    args.filter = ['^']
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-m", "--mutual", type=str2bool, nargs='?',
-                    const=True, default=False,
-                    help="Check mutual or not")
-parser.add_argument("-db", "--database", type=str,
-                    help="Connect to preferred db")
-parser.add_argument("-tr", "--trigger", type=str,
-                    help="Trigger word for menfess")
-parser.add_argument("-f", "--filter", help="Add file for filtered words")
+db = Database(args.menfess)
+db.connect_db(args.database)
+db.select_collection('menfess_credentials')
 
-args = parser.parse_args()
-print(args)
+credentials = db.get_credentials()
 
-with open(args.filter) as f:
-    filters = f.read().split(', ')
-
-args.filter = filters
-
-db_name = args.database
-
-db = Database()
-db.connect_db(db_name)
-db.select_col('environment')
-
-consumer_key = db.find_object('consumer_key')
-consumer_secret = db.find_object('consumer_secret')
-access_token = db.find_object('access_token')
-access_token_secret = db.find_object('access_token_secret')
+consumer_key = credentials['consumer_key']
+consumer_secret = credentials['consumer_secret']
+access_token = credentials['access_token']
+access_token_secret = credentials['access_secret']
 
 
 def main(ck, cs, at, ats):
     bot = Twitter(ck, cs, at, ats, args)
-    db = Database()
-    db.connect_db(db_name)
-    db.select_col('dm')
+    db = Database(args.menfess)
+    db.connect_db(args.database)
+    db.select_collection(args.menfess)
 
     minute_wait = 5
 
