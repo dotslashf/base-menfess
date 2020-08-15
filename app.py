@@ -40,7 +40,7 @@ def run(db):
     if is_active:
         db.select_collection(args.menfess)
         print(f'Menfess status: {"on" if is_active else "off"}')
-        
+
         l = db.find_last_object()
         last_id = l['latest_dm_id']
 
@@ -49,6 +49,7 @@ def run(db):
         if last_id == latest_id:
             print('no new dm')
 
+        print(f"Will check DMs in {refresh_interval} mins")
         time.sleep(refresh_interval * 60)
 
     else:
