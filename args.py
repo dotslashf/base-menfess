@@ -17,11 +17,12 @@ def create_parser():
                         const=True, default=False,
                         help="Check mutual or not")
     parser.add_argument("-db", "--database", type=str,
-                        help="Connect to preferred db", required=True)
+                        help="Connect to preferred db", required=True, default="menfess_twitter")
     parser.add_argument("-mf", "--menfess", type=str,
                         help="Choose menfess to connect", required=True)
     parser.add_argument("-tr", "--trigger", type=str,
                         help="Trigger word for menfess", required=True)
     parser.add_argument("-f", "--filter", help="Add file for filtered words")
+    parser.add_argument("-rf" "--refresh", help="Set refresh dm time interval", default=5, type=int)
 
     return parser.parse_args()

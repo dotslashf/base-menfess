@@ -22,21 +22,23 @@ db.select_collection('menfess_credentials')
 
 credentials = db.get_credentials()
 
-consumer_key = credentials['consumer_key']
-consumer_secret = credentials['consumer_secret']
-access_token = credentials['access_token']
-access_token_secret = credentials['access_secret']
+consumer_key = credentials['consumerKey']
+consumer_secret = credentials['consumerSecret']
+access_token = credentials['accessToken']
+access_token_secret = credentials['accessSecret']
+is_active = credentials['isActive']
+refresh_interval = args.refresh
 
 
-def main(ck, cs, at, ats):
-    bot = Twitter(ck, cs, at, ats, args)
+def run(is_active):
+    bot = Twitter(consumer_key, consumer_secret,
+                  access_token, access_token_secret, args)
     db = Database(args.menfess)
     db.connect_db(args.database)
     db.select_collection(args.menfess)
 
-    minute_wait = 5
-
-    while True:
+    if is_active:
+        print(f"Menfess is_active: {is_active}")
         l = db.find_last_object()
         last_id = l['latest_dm_id']
 
@@ -45,13 +47,21 @@ def main(ck, cs, at, ats):
         if last_id == latest_id:
             print('no new dm')
 
-        for sec in range(minute_wait * 60, 0, -1):
+        for sec in range(refresh_interval * 60, 0, -1):
             sys.stdout.write("\r")
             sys.stdout.write("{:2d} second to check dm.\r".format(sec))
             sys.stdout.flush()
             time.sleep(1)
 
+        db.select_collection('menfess_credentials')
+        is_active = credentials['isActive']
+    else:
+        print(f"Menfess is_active: {is_active}")
+        db.select_collection('menfess_credentials')
+        is_active = credentials['isActive']
+        time.sleep(60)
+
 
 if __name__ == "__main__":
-    main(consumer_key, consumer_secret,
-         access_token, access_token_secret)
+    while True:
+        run(is_active)
