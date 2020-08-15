@@ -60,7 +60,7 @@ class Database:
         print(f"💾 DM ID: {data['latest_dm_id']} saved")
 
     def get_credentials(self):
-        data = self.collection.find_one({'menfess_name': self.menfess})
+        data = self.collection.find_one({'menfessName': self.menfess})
         return data
 
     def find_and_modify(self, key, value):
