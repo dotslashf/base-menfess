@@ -144,7 +144,7 @@ class Twitter:
                 self.trigger_word = self.trigger_word.replace("\\", "")
 
             if id != latest_id:
-                if (self.trigger_word in text) and (self.trigger_word.capitalize() in text) and (not self.is_contained_filtered_words(text)):
+                if ((self.trigger_word in text) or (self.trigger_word.capitalize() in text)) and (not self.is_contained_filtered_words(text)):
                     if self.is_mutual(sender):
                         if "attachment" in dm.message_create['message_data']:
                             dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]

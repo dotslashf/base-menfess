@@ -16,10 +16,10 @@ db.select_collection('menfess_credentials')
 
 credentials = db.get_credentials()
 
-consumer_key = credentials['consumer_key']
-consumer_secret = credentials['consumer_secret']
-access_token = credentials['access_token']
-access_token_secret = credentials['access_secret']
+consumer_key = credentials['consumerKey']
+consumer_secret = credentials['consumerSecret']
+access_token = credentials['accessToken']
+access_token_secret = credentials['accessSecret']
 
 bot = Twitter(consumer_key, consumer_secret,
               access_token, access_token_secret, args)
