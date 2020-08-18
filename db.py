@@ -63,6 +63,12 @@ class Database:
         data = self.collection.find_one({'menfessName': self.menfess})
         return data
 
+    def is_subscribe(self):
+        data = self.collection.find_one({'menfessName': self.menfess})
+        subscription_end = data['subscriptionEnd']
+        today = datetime.datetime.now()
+        return subscription_end > today
+
     def find_and_modify(self, key, value):
         self.collection.find_one_and_update(
             {'key': key}, {'$set': {'value': value}})
@@ -71,6 +77,6 @@ class Database:
     def create_collection_first_time(self):
         self.collection = self.db[f"{self.menfess}"]
         data = {'_id': 1, 'latest_dm_id': '', 'sender_id': '',
-                'text': '', 'date': datetime.datetime.now(), 'is_active': True}
+                'text': '', 'date': datetime.datetime.now()}
         self.collection.insert_one(data)
         print(f"created {self.menfess} dm list")

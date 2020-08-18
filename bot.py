@@ -11,7 +11,7 @@ from splicer import Splicer
 
 
 class Twitter:
-    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, args):
+    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, args, trigger_word):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token = access_token
@@ -19,7 +19,7 @@ class Twitter:
         self.auth = self.authentication()
         self.api = tweepy.API(self.auth)
         self.me = self.api.me()
-        self.trigger_word = args.trigger
+        self.trigger_word = trigger_word
         self.tweet_interval = 30
         self.path_media = "img/current_img.png"
         self.args = args
@@ -119,6 +119,14 @@ class Twitter:
         time.sleep(1)
         media = Image.open(self.path_media)
         return media.filename
+        
+    def notify_menfess_is_sent(self, sender_id):
+        latest_tweet = self.api.home_timeline(count=1)
+        latest_tweet_id = latest_tweet[0].id
+        menfess = self.me
+
+        text = f"Hi, menfess kamu sudah ke kirim, silahkan di cek ya! \nMakasih sudah memakai jasa kami menfess kami, 🚀 Powered by @mockthistweet https://twitter.com/{menfess.screen_name}/status/{latest_tweet_id}"
+        self.api.send_direct_message(sender_id, text)
 
     def is_contained_filtered_words(self, text):
         for fil in self.filters:
@@ -184,8 +192,10 @@ class Twitter:
                 else:
                     self.tweet_status(dm)
 
+                self.notify_menfess_is_sent(sender.id)
+
                 db.insert_object(
-                    {'latest_dm_id': dm['id'], 'sender': sender.id_str, 'text': dm['text']})
+                    {'latest_dm_id': dm['id'], 'sender': sender.id_str, 'text': dm['text'], 'username': sender.screen_name})
 
             except tweepy.TweepError as error:
                 print(f"{error.api_code}, {error.response}, {error.reason}")

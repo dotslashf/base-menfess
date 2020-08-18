@@ -27,18 +27,19 @@ consumer_key = credentials['consumerKey']
 consumer_secret = credentials['consumerSecret']
 access_token = credentials['accessToken']
 access_token_secret = credentials['accessSecret']
+trigger_word = credentials['triggerWord']
 refresh_interval = args.refresh
 
 
-def run(db):
+def run(db, trigger_word):
     bot = Twitter(consumer_key, consumer_secret,
-                  access_token, access_token_secret, args)
+                  access_token, access_token_secret, args, trigger_word)
 
     db.select_collection('menfess_credentials')
     credentials = db.get_credentials()
     is_active = credentials['isActive']
 
-    if is_active:
+    if is_active and db.is_subscribe():
         db.select_collection(args.menfess)
         print(f'Menfess status: {"on" if is_active else "off"}')
 
@@ -50,8 +51,8 @@ def run(db):
         except TweepError as error:
             print(f"{error.api_code}, {error.response}, {error.reason}")
             if error.api_code == 326 or error.api_code == "326":
-                    print("Account locked, sleeping 30 minutes")
-                    time.sleep(30 * 60)
+                print("Account locked, sleeping 30 minutes")
+                time.sleep(30 * 60)
 
         if last_id == latest_id:
             print('no new dm')
@@ -60,11 +61,15 @@ def run(db):
         time.sleep(refresh_interval * 60)
 
     else:
-        print(f'Menfess status: {"on" if is_active else "off"}')
-        print("Check menfess status in 1 min")
-        time.sleep(60)
+        if not db.is_subscribe():
+            print("Continue subscription please")
+            break
+        else:
+            print(f'Menfess status: {"on" if is_active else "off"}')
+            print("Check menfess status in 1 min")
+            time.sleep(60)
 
 
 if __name__ == "__main__":
     while True:
-        run(db)
+        run(db, trigger_word)
