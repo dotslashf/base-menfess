@@ -63,7 +63,7 @@ def run(db, trigger_word):
     else:
         if not db.is_subscribe():
             print("Continue subscription please")
-            break
+            return False
         else:
             print(f'Menfess status: {"on" if is_active else "off"}')
             print("Check menfess status in 1 min")

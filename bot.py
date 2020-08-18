@@ -127,6 +127,7 @@ class Twitter:
 
         text = f"Hi, menfess kamu sudah ke kirim, silahkan di cek ya! \nMakasih sudah memakai jasa kami menfess kami, 🚀 Powered by @mockthistweet https://twitter.com/{menfess.screen_name}/status/{latest_tweet_id}"
         self.api.send_direct_message(sender_id, text)
+        print("User notified!")
 
     def is_contained_filtered_words(self, text):
         for fil in self.filters:
@@ -183,8 +184,6 @@ class Twitter:
         for index, dm in enumerate(reversed(list_dm)):
             sender = self.api.get_user(id=dm['sender'])
 
-            print(
-                f"\n📨 | #️⃣ : {index+1} | 👥 : @{sender.screen_name} | 💬 : {dm['text']}")
             try:
                 if dm['media_url']:
                     file = self.get_dm_media(dm['media_url'])
@@ -192,6 +191,7 @@ class Twitter:
                 else:
                     self.tweet_status(dm)
 
+                print(f"\n📨 | #️⃣ : {index+1} | 👥 : @{sender.screen_name} | 💬 : {dm['text']}")
                 self.notify_menfess_is_sent(sender.id)
 
                 db.insert_object(
