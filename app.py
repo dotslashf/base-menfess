@@ -2,6 +2,7 @@ import sys
 import time
 import os
 import argparse
+from tweepy import TweepError
 from bot import Twitter
 from db import Database
 from args import create_parser
@@ -44,7 +45,13 @@ def run(db):
         l = db.find_last_object()
         last_id = l['latest_dm_id']
 
-        latest_id = bot.get_dms(last_id)
+        try:
+            latest_id = bot.get_dms(last_id)
+        except TweepError as error:
+            print(f"{error.api_code}, {error.response}, {error.reason}")
+            if error.api_code == 326 or error.api_code == "326":
+                    print("Account locked, sleeping 30 minutes")
+                    time.sleep(30 * 60)
 
         if last_id == latest_id:
             print('no new dm')
