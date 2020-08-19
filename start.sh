@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 app.py -mf "nama menfess" -tr "trigger"
+python3 app.py -mf "nama menfess"
