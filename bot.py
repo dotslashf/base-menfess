@@ -26,6 +26,7 @@ class Twitter:
         self.db_name = args.database
         self.filters = args.filter
         self.menfess = args.menfess
+        self.current_dm = None
 
     def authentication(self):
         self.auth = tweepy.OAuthHandler(
@@ -93,8 +94,8 @@ class Twitter:
                     self.api.update_with_media(
                         filename=filename, status=final_text)
                 else:
-                    home_tl = self.api.home_timeline(count=5)
-                    latest_tweet_id = home_tl[0].id
+                    user_tl = self.api.user_timeline(count=5)
+                    latest_tweet_id = user_tl[0].id
                     self.api.update_status(
                         status=tweets[i], in_reply_to_status_id=latest_tweet_id)
                 time.sleep(5)
@@ -103,8 +104,8 @@ class Twitter:
                 if i == 0:
                     self.api.update_status(status=tweets[i])
                 else:
-                    home_tl = self.api.home_timeline(count=5)
-                    latest_tweet_id = home_tl[0].id
+                    user_tl = self.api.user_timeline(count=5)
+                    latest_tweet_id = user_tl[0].id
                     self.api.update_status(
                         status=tweets[i], in_reply_to_status_id=latest_tweet_id)
 
@@ -119,15 +120,27 @@ class Twitter:
         time.sleep(1)
         media = Image.open(self.path_media)
         return media.filename
-        
-    def notify_menfess_is_sent(self, sender_id):
-        latest_tweet = self.api.home_timeline(count=1)
-        latest_tweet_id = latest_tweet[0].id
-        menfess = self.me
 
-        text = f"Hi, menfess kamu sudah ke kirim, silahkan di cek ya! \nMakasih sudah memakai jasa kami menfess kami, 🚀 Powered by @mockthistweet https://twitter.com/{menfess.screen_name}/status/{latest_tweet_id}"
-        self.api.send_direct_message(sender_id, text)
-        print("User notified!")
+    def find_menfess(self):
+        if len(self.current_dm) < 15:
+            return None
+
+        latest_tweet = self.api.user_timeline(count=10)
+        for tweet in latest_tweet:
+            if self.current_dm[0:15] in tweet.text:
+                return tweet.id
+            else:
+                return None
+
+    def notify_menfess_is_sent(self, sender_id):
+        latest_tweet_id = self.find_menfess()
+        if latest_tweet_id != None:
+            base_menfess = self.me
+            text = f"Hi, menfess kamu sudah ke kirim, silahkan di cek ya! \nMakasih sudah memakai jasa kami menfess kami, 🚀 Powered by @mockthistweet https://twitter.com/{base_menfess.screen_name}/status/{latest_tweet_id}"
+            self.api.send_direct_message(sender_id, text)
+            print("User notified!")
+        else:
+            print("Menfess not found / Menfess to short to be identified")
 
     def is_contained_filtered_words(self, text):
         for fil in self.filters:
@@ -191,6 +204,7 @@ class Twitter:
                 else:
                     self.tweet_status(dm)
 
+                self.current_dm = dm['text']
                 print(f"\n📨 | #️⃣ : {index+1} | 👥 : @{sender.screen_name} | 💬 : {dm['text']}")
                 self.notify_menfess_is_sent(sender.id)
 
