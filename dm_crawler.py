@@ -20,10 +20,9 @@ consumer_key = credentials['consumerKey']
 consumer_secret = credentials['consumerSecret']
 access_token = credentials['accessToken']
 access_token_secret = credentials['accessSecret']
-trigger_word = credentials['triggerWord']
 
 bot = Twitter(consumer_key, consumer_secret,
-              access_token, access_token_secret, args, trigger_word)
+              access_token, access_token_secret, args)
 
 
 def get_dms(latest_id):

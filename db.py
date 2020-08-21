@@ -37,7 +37,6 @@ class Database:
             col_list = self.db.list_collection_names()
             if collection in col_list:
                 self.collection = self.db[collection]
-                print("➡️  {} collection selected\n".format(collection))
             else:
                 print('no collection {} found'.format(collection))
                 print("creating collection")
@@ -60,10 +59,19 @@ class Database:
         print(f"💾 DM ID: {data['latest_dm_id']} saved")
 
     def get_credentials(self):
+        self.select_collection('menfess_credentials')
+        print(f"🔑 Get menfess credentials")
+        data = self.collection.find_one({'menfessName': self.menfess})
+        return data
+
+    def get_configuration(self):
+        self.select_collection('menfess_configuration')
+        print(f"⚙️ Get menfess configuration")
         data = self.collection.find_one({'menfessName': self.menfess})
         return data
 
     def is_subscribe(self):
+        self.select_collection('menfess_credentials')
         data = self.collection.find_one({'menfessName': self.menfess})
         subscription_end = data['subscriptionEnd']
         today = datetime.datetime.now()

@@ -11,7 +11,7 @@ from splicer import Splicer
 
 
 class Twitter:
-    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, args, trigger_word):
+    def __init__(self, consumer_key, consumer_secret, access_token, access_token_secret, args):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.access_token = access_token
@@ -19,8 +19,9 @@ class Twitter:
         self.auth = self.authentication()
         self.api = tweepy.API(self.auth)
         self.me = self.api.me()
-        self.trigger_word = trigger_word
-        self.tweet_interval = 30
+        self.trigger_word = None
+        self.message_reply = None
+        self.tweet_interval = None
         self.path_media = "img/current_img.png"
         self.args = args
         self.db_name = args.database
@@ -33,6 +34,14 @@ class Twitter:
             self.consumer_key, self.consumer_secret)
         self.auth.set_access_token(self.access_token, self.access_token_secret)
         return self.auth
+
+    def set_configuration(self):
+        db = Database(self.menfess)
+        db.connect_db(self.db_name)
+        configuration = db.get_configuration()
+        self.trigger_word = configuration['triggerWord']
+        self.message_reply = configuration['messageReply']
+        self.tweet_interval = configuration['tweetInterval']
 
     def load_dict(self, dict_name):
         dict = yaml.load("{}".format(dict_name), Loader=yaml.BaseLoader)
@@ -136,9 +145,12 @@ class Twitter:
         latest_tweet_id = self.find_menfess()
         if latest_tweet_id != None:
             base_menfess = self.me
-            text = f"Hi, menfess kamu sudah ke kirim, silahkan di cek ya! \nMakasih sudah memakai jasa kami menfess kami, 🚀 Powered by @mockthistweet https://twitter.com/{base_menfess.screen_name}/status/{latest_tweet_id}"
-            self.api.send_direct_message(sender_id, text)
-            print("User notified!")
+            text = f"{self.message_reply} https://twitter.com/{base_menfess.screen_name}/status/{latest_tweet_id}"
+            try:
+                self.api.send_direct_message(sender_id, text)
+                print("User notified!")
+            except tweepy.TweepError as error:
+                print(error)
         else:
             print("Menfess not found / Menfess to short to be identified")
 
@@ -152,6 +164,7 @@ class Twitter:
         return False
 
     def get_dms(self, latest_id):
+        self.set_configuration()
         list_dm = []
         new_latest_id = latest_id
 
@@ -161,9 +174,6 @@ class Twitter:
             text = dm.message_create['message_data']['text']
             sender = dm.message_create['sender_id']
             id = dm.id
-
-            if self.trigger_word[0] == "\\":
-                self.trigger_word = self.trigger_word.replace("\\", "")
 
             if id != latest_id:
                 if ((self.trigger_word in text) or (self.trigger_word.capitalize() in text)) and (not self.is_contained_filtered_words(text)):

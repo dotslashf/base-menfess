@@ -19,7 +19,6 @@ else:
 
 db = Database(args.menfess)
 db.connect_db(args.database)
-db.select_collection('menfess_credentials')
 
 credentials = db.get_credentials()
 
@@ -27,21 +26,19 @@ consumer_key = credentials['consumerKey']
 consumer_secret = credentials['consumerSecret']
 access_token = credentials['accessToken']
 access_token_secret = credentials['accessSecret']
-trigger_word = credentials['triggerWord']
-refresh_interval = args.refresh
 
 
-def run(db, trigger_word):
+def run(db):
     bot = Twitter(consumer_key, consumer_secret,
-                  access_token, access_token_secret, args, trigger_word)
+                  access_token, access_token_secret, args)
 
-    db.select_collection('menfess_credentials')
-    credentials = db.get_credentials()
-    is_active = credentials['isActive']
+    configuration = db.get_configuration()
+    is_active = configuration['isActive']
+    refresh_interval = configuration['refreshInterval']
 
     if is_active and db.is_subscribe():
-        db.select_collection(args.menfess)
         print(f'Menfess status: {"on" if is_active else "off"}')
+        db.select_collection(args.menfess)
 
         l = db.find_last_object()
         last_id = l['latest_dm_id']
@@ -63,7 +60,7 @@ def run(db, trigger_word):
     else:
         if not db.is_subscribe():
             print("Continue subscription please")
-            return False
+            sys.exit()
         else:
             print(f'Menfess status: {"on" if is_active else "off"}')
             print("Check menfess status in 1 min")
@@ -72,4 +69,4 @@ def run(db, trigger_word):
 
 if __name__ == "__main__":
     while True:
-        run(db, trigger_word)
+        run(db)
