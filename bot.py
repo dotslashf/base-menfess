@@ -5,6 +5,8 @@ import os
 import time
 import yaml
 from requests_oauthlib import OAuth1Session
+from dateutil import relativedelta
+from datetime import datetime
 from db import Database
 from PIL import Image
 from splicer import Splicer
@@ -25,9 +27,14 @@ class Twitter:
         self.path_media = "img/current_img.png"
         self.args = args
         self.db_name = args.database
-        self.filters = args.filter
         self.menfess = args.menfess
         self.current_dm = None
+        self.filter_words = []
+        self.mutual_only = None
+        self.min_tweets = 0
+        self.min_followers = 0
+        self.min_join_month = 0
+        self.soft_block_lists = []
 
     def authentication(self):
         self.auth = tweepy.OAuthHandler(
@@ -35,26 +42,51 @@ class Twitter:
         self.auth.set_access_token(self.access_token, self.access_token_secret)
         return self.auth
 
-    def set_configuration(self):
+    def get_configuration(self):
         db = Database(self.menfess)
         db.connect_db(self.db_name)
         configuration = db.get_configuration()
         self.trigger_word = configuration['triggerWord']
         self.message_reply = configuration['messageReply']
         self.tweet_interval = configuration['tweetInterval']
-
-    def load_dict(self, dict_name):
-        dict = yaml.load("{}".format(dict_name), Loader=yaml.BaseLoader)
-        return dict
+        self.min_tweets = configuration['minTweets']
+        self.min_followers = configuration['minFollowers']
+        self.min_join_month = configuration['minJoinMonths']
+        self.mutual_only = configuration['mutualOnly']
+        self.soft_block_lists = configuration['softBlockLists']
+        self.filter_words = configuration['filterWords']
 
     def is_mutual(self, sender):
         source_id = self.me.id
-        if self.args.mutual:
+        if self.mutual_only:
             fs = self.api.show_friendship(
                 source_id=source_id, target_id=int(sender))
             return fs[0].followed_by and fs[1].followed_by
         else:
             return True
+
+    def get_account_old(self, user_old):
+        today = datetime.now()
+        diff = relativedelta.relativedelta(today, user_old)
+        return diff.months+(diff.years*12)
+
+    def get_criteria_sender(self, sender):
+        sender = self.api.get_user(int(sender))
+        account_old = self.get_account_old(sender.created_at.date())
+        followers = sender.followers_count
+        total_tweets = sender.statuses_count
+
+        for i in range(len(self.soft_block_lists)):
+            if sender == self.soft_block_lists[i]['id']:
+                return False
+
+        if self.is_mutual(sender):
+            if (account_old > self.min_join_month) and (followers > self.min_tweets) and (total_tweets > self.min_tweets):
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def tweet_status(self, dm):
         if self.is_dm_longer(dm):
@@ -155,8 +187,8 @@ class Twitter:
             print("Menfess not found / Menfess to short to be identified")
 
     def is_contained_filtered_words(self, text):
-        for fil in self.filters:
-            if fil not in text:
+        for words in self.filter_words:
+            if words not in text:
                 continue
             else:
                 print("Contained filtered words, skipped")
@@ -164,7 +196,7 @@ class Twitter:
         return False
 
     def get_dms(self, latest_id):
-        self.set_configuration()
+        self.get_configuration()
         list_dm = []
         new_latest_id = latest_id
 
@@ -177,7 +209,7 @@ class Twitter:
 
             if id != latest_id:
                 if ((self.trigger_word in text) or (self.trigger_word.capitalize() in text)) and (not self.is_contained_filtered_words(text)):
-                    if self.is_mutual(sender):
+                    if self.get_criteria_sender(sender):
                         if "attachment" in dm.message_create['message_data']:
                             dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
                             list_dm.append(
@@ -189,7 +221,7 @@ class Twitter:
                                 {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
                             print('Added 1 DM')
                     else:
-                        print('Skipped sender is not mutual')
+                        print('Skipped sender is not mutual or criteria not satisfied')
             elif id == latest_id:
                 break
 
