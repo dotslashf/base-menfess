@@ -14,15 +14,9 @@ def str2bool(v):
 
 def create_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m", "--mutual", type=str2bool, nargs='?',
-                        const=True, default=False,
-                        help="Check mutual or not")
     parser.add_argument("-db", "--database", type=str,
                         help="Connect to preferred db", default="menfess_twitter")
     parser.add_argument("-mf", "--menfess", type=str,
                         help="Choose menfess to connect", required=True)
-    parser.add_argument("-f", "--filter", help="Add file for filtered words")
-    parser.add_argument(
-        "-rf", "--refresh", help="Set refresh dm time interval", default=5, nargs='?', const=5, type=int)
 
     return parser.parse_args()

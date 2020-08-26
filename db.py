@@ -24,7 +24,7 @@ class Database:
         try:
             db_list = self.client.list_database_names()
             if database in db_list:
-                print('\n🗄️  connected to {} database'.format(database))
+                print('\n📖 connected to {} database'.format(database))
                 self.db = self.client[database]
             else:
                 print('no database such as {} found'.format(database))
