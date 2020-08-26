@@ -60,7 +60,7 @@ class Twitter:
         source_id = self.me.id
         if self.mutual_only:
             fs = self.api.show_friendship(
-                source_id=source_id, target_id=int(sender))
+                source_id=source_id, target_id=sender.id)
             return fs[0].followed_by and fs[1].followed_by
         else:
             return True
