@@ -10,13 +10,6 @@ from args import create_parser
 
 args = create_parser()
 
-if args.filter:
-    with open(args.filter) as f:
-        filters = f.read().split(', ')
-    args.filter = filters
-else:
-    args.filter = ['^']
-
 db = Database(args.menfess)
 db.connect_db(args.database)
 
