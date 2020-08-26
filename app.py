@@ -56,8 +56,8 @@ def run(db):
             sys.exit()
         else:
             print(f'Menfess status: {"on" if is_active else "off"}')
-            print("Check menfess status in 1 min")
-            time.sleep(60)
+            print("Check menfess status in 5 min")
+            time.sleep(5 * 60)
 
 
 if __name__ == "__main__":
