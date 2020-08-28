@@ -78,15 +78,25 @@ class Twitter:
 
         for i in range(len(self.soft_block_lists)):
             if sender == self.soft_block_lists[i]['id']:
-                return False
+                return False, "soft blocked"
 
         if self.is_mutual(sender):
-            if (account_old > self.min_join_month) and (followers > self.min_tweets) and (total_tweets > self.min_tweets):
-                return True
+            is_elligible = (account_old >= self.min_join_month) and (
+                followers >= self.min_followers) and (total_tweets >= self.min_tweets)
+
+            if (account_old < self.min_join_month):
+                reason = 'account not old enough'
+            elif (followers < self.min_followers):
+                reason = 'followers not enough'
+            elif (total_tweets < self.min_tweets):
+                reason = 'total tweets not enough'
             else:
-                return False
+                reason = 'in criteria'
+
+            return is_elligible, reason
+
         else:
-            return False
+            return False, "not mutual"
 
     def tweet_status(self, dm):
         if self.is_dm_longer(dm):
@@ -209,7 +219,8 @@ class Twitter:
 
             if id != latest_id:
                 if ((self.trigger_word in text) or (self.trigger_word.capitalize() in text)) and (not self.is_contained_filtered_words(text)):
-                    if self.get_criteria_sender(sender):
+                    is_in_criteria, reason = self.get_criteria_sender(sender)
+                    if is_in_criteria:
                         if "attachment" in dm.message_create['message_data']:
                             dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
                             list_dm.append(
@@ -221,7 +232,7 @@ class Twitter:
                                 {'text': text, 'id': id, 'sender': sender, 'media_url': dm_media_url})
                             print('Added 1 DM')
                     else:
-                        print('Skipped sender is not mutual or criteria not satisfied')
+                        print(f'Reason skipped: {reason}')
             elif id == latest_id:
                 break
 
@@ -247,7 +258,8 @@ class Twitter:
                     self.tweet_status(dm)
 
                 self.current_dm = dm['text']
-                print(f"\n📨 | #️⃣ : {index+1} | 👥 : @{sender.screen_name} | 💬 : {dm['text']}")
+                print(
+                    f"\n📨 | #️⃣ : {index+1} | 👥 : @{sender.screen_name} | 💬 : {dm['text']}")
                 self.notify_menfess_is_sent(sender.id)
 
                 db.insert_object(

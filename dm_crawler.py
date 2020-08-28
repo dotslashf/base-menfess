@@ -36,8 +36,9 @@ def get_dms(latest_id):
         id = dm.id
 
         sender = bot.api.get_user(sender_id)
-        print(f"{id}\n{sender.screen_name}\n{text}\n")
-        print('Added 1 DM')
+        if bot.get_criteria_sender(sender.id):
+            print(f"{id}\n{sender.screen_name}\n{text}\n")
+            print('Added 1 DM')
 
         if id == latest_id:
             break
