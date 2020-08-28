@@ -205,6 +205,15 @@ class Twitter:
                 return True
         return False
 
+    def is_blank_menfess(self, dm):
+        pass
+        text = dm.message_create['message_data']['text']
+        attachment = dm.message_create['message_data']
+        if (len(text.split()) == 1) and "attachment" not in attachment:
+            return True
+        else:
+            return False
+
     def get_dms(self, latest_id):
         self.get_configuration()
         list_dm = []
@@ -220,7 +229,7 @@ class Twitter:
             if id != latest_id:
                 if ((self.trigger_word in text) or (self.trigger_word.capitalize() in text)) and (not self.is_contained_filtered_words(text)):
                     is_in_criteria, reason = self.get_criteria_sender(sender)
-                    if is_in_criteria:
+                    if is_in_criteria and not self.is_blank_menfess(dm):
                         if "attachment" in dm.message_create['message_data']:
                             dm_media_url = dm.message_create['message_data']["attachment"]["media"]["media_url_https"]
                             list_dm.append(
